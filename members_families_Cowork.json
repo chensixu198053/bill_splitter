@@ -1,0 +1,38 @@
+{
+  "_version": 1,
+  "_savedAt": "2026-05-14T21:45:55.511Z",
+  "members": [
+    "Sam",
+    "Sunny",
+    "Fei",
+    "Ying",
+    "Yuelin",
+    "Wayne",
+    "Chi",
+    "Hua",
+    "Jiao"
+  ],
+  "families": [
+    {
+      "name": "Sam's family",
+      "members": [
+        "Sam",
+        "Sunny"
+      ]
+    },
+    {
+      "name": "Fei's family",
+      "members": [
+        "Fei",
+        "Ying"
+      ]
+    },
+    {
+      "name": "Wayne's family",
+      "members": [
+        "Yuelin",
+        "Wayne"
+      ]
+    }
+  ]
+}

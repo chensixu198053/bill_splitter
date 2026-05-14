@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Cost Splitter</title>
+  <link rel="stylesheet" href="bill_splitter_Cowork.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="app-header">
+    <h1>🍽️ Meal Cost Splitter</h1>
+    <p>Track who paid for lunch, dinner &amp; more — see how much everyone owes.</p>
+  </div>
+
+  <!-- ── Tabs ── -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="costs">✏️ Enter Costs</button>
+    <button class="tab-btn" data-tab="summary">💰 Summary</button>
+    <button class="tab-btn" data-tab="history">📅 History</button>
+    <button class="tab-btn tab-btn-admin" data-tab="admin" id="adminTabBtn">🔐 Admin</button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       TAB: Enter Costs
+  ══════════════════════════════════ -->
+  <div id="tab-costs" class="tab-content active">
+
+    <div id="errorBanner" class="error-banner" style="display:none;">
+      <span>⚠️</span><span id="errorMsg"></span>
+    </div>
+
+    <!-- Date card -->
+    <div class="date-card">
+      <span class="date-card-label">📅 Date</span>
+      <input type="date" id="eventDate" class="date-input" />
+    </div>
+
+    <!-- Lunch -->
+    <div class="meal-card">
+      <h2>🥗 Lunch</h2>
+      <div class="form-group">
+        <label for="lunchCost">Total Cost ($)</label>
+        <input type="number" id="lunchCost" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label for="lunchPayer">Who Paid?</label>
+        <select id="lunchPayer"><option value="">— Select payer —</option></select>
+      </div>
+      <div class="form-group">
+        <div class="attendees-label-row">
+          <label>Who Attended?</label>
+          <button class="btn-select-all" onclick="toggleSelectAll('lunchAtt', this)">Select All</button>
+        </div>
+        <div id="lunchAttendees" class="checkbox-group">
+          <span class="no-members-note">Add members in the Admin tab first.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dinner -->
+    <div class="meal-card dinner-card">
+      <h2>🍽️ Dinner</h2>
+      <div class="form-group">
+        <label for="dinnerCost">Total Cost ($)</label>
+        <input type="number" id="dinnerCost" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label for="dinnerPayer">Who Paid?</label>
+        <select id="dinnerPayer"><option value="">— Select payer —</option></select>
+      </div>
+      <div class="form-group">
+        <div class="attendees-label-row">
+          <label>Who Attended?</label>
+          <button class="btn-select-all" onclick="toggleSelectAll('dinnerAtt', this)">Select All</button>
+        </div>
+        <div id="dinnerAttendees" class="checkbox-group">
+          <span class="no-members-note">Add members in the Admin tab first.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other -->
+    <div class="meal-card other-card">
+      <h2>🧾 Other</h2>
+      <div class="form-group">
+        <label for="otherItemName">Item Name</label>
+        <input type="text" id="otherItemName" placeholder="e.g. Drinks, Dessert, Taxi…" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label for="otherCost">Total Cost ($)</label>
+        <input type="number" id="otherCost" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label for="otherPayer">Who Paid?</label>
+        <select id="otherPayer"><option value="">— Select payer —</option></select>
+      </div>
+      <div class="form-group">
+        <div class="attendees-label-row">
+          <label>Who Attended?</label>
+          <button class="btn-select-all" onclick="toggleSelectAll('otherAtt', this)">Select All</button>
+        </div>
+        <div id="otherAttendees" class="checkbox-group">
+          <span class="no-members-note">Add members in the Admin tab first.</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calculate" onclick="calculate()">Calculate &amp; See Summary →</button>
+
+  </div><!-- /tab-costs -->
+
+
+  <!-- ══════════════════════════════════
+       TAB: Summary
+  ══════════════════════════════════ -->
+  <div id="tab-summary" class="tab-content">
+
+    <div id="summaryContent">
+      <div class="placeholder-msg">
+        <div class="icon">📋</div>
+        <p>Fill in the details on the <strong>Enter Costs</strong> tab, then click <strong>Calculate</strong>.</p>
+      </div>
+    </div>
+
+    <!-- Confirm button — shown only after Calculate is run -->
+    <div id="confirmSection" style="display:none;">
+      <button class="btn-confirm" onclick="confirmAndSave()">✅ Confirm &amp; Save to History</button>
+    </div>
+
+  </div><!-- /tab-summary -->
+
+
+  <!-- ══════════════════════════════════
+       TAB: History
+  ══════════════════════════════════ -->
+  <div id="tab-history" class="tab-content">
+    <div id="historyContent">
+      <div class="placeholder-msg">
+        <div class="icon">📅</div>
+        <p>No history yet. Calculate a summary and click <strong>Confirm &amp; Save to History</strong>.</p>
+      </div>
+    </div>
+  </div><!-- /tab-history -->
+
+
+  <!-- ══════════════════════════════════
+       TAB: Admin
+  ══════════════════════════════════ -->
+  <div id="tab-admin" class="tab-content">
+
+    <!-- LOCKED STATE -->
+    <div id="adminLockScreen" class="admin-lock-screen">
+      <div class="lock-icon">🔒</div>
+      <h2 class="lock-title">Admin Access Required</h2>
+      <p class="lock-subtitle">Enter the admin password to manage members and families.</p>
+      <div class="lock-input-row">
+        <input type="password" id="adminPasswordInput" class="lock-password-input"
+               placeholder="Enter password…" maxlength="64" />
+        <button class="btn-unlock" onclick="tryUnlock()">Unlock</button>
+      </div>
+      <div id="lockError" class="lock-error" style="display:none;">
+        ❌ Incorrect password. Please try again.
+      </div>
+    </div>
+
+    <!-- UNLOCKED STATE -->
+    <div id="adminContent" style="display:none;">
+
+      <div class="admin-header-row">
+        <h2 class="admin-title">👥 Members</h2>
+        <button class="btn-lock" onclick="lockAdmin()">🔒 Lock Admin</button>
+      </div>
+
+      <div class="card">
+        <div class="add-member-row">
+          <input type="text" id="memberInput"
+                 placeholder="Enter a name and press Enter or Add…" maxlength="40" />
+          <button class="btn-add" onclick="addMember()">+ Add</button>
+        </div>
+        <div id="memberTags" class="member-tags">
+          <span class="no-members">No members yet — add someone above.</span>
+        </div>
+      </div>
+
+      <div class="admin-section-divider"></div>
+      <div class="admin-section-header">
+        <h2 class="admin-title">👨‍👩‍👧 Families</h2>
+        <span class="admin-section-hint">Group members into family units for combined totals.</span>
+      </div>
+
+      <div class="card">
+        <div class="form-group">
+          <label for="familyNameInput">Family Name</label>
+          <input type="text" id="familyNameInput"
+                 placeholder="e.g. Sam's Family, Table A…" maxlength="50" />
+        </div>
+        <div class="form-group">
+          <label>Select Members</label>
+          <div id="familyMemberCheckboxes" class="checkbox-group">
+            <span class="no-members-note">Add members above first.</span>
+          </div>
+        </div>
+        <button class="btn-add-family" onclick="addFamily()">+ Add Family</button>
+        <div id="familyList" class="family-list"></div>
+      </div>
+
+      <!-- ── Data Management section ── -->
+      <div class="admin-section-divider"></div>
+      <div class="admin-section-header">
+        <h2 class="admin-title">💾 Data Management</h2>
+        <span class="admin-section-hint">Two separate files keep your setup and records independent. Replace the downloaded files in your project folder (or GitHub) to persist changes.</span>
+      </div>
+
+      <!-- Members & Families file -->
+      <div class="card data-mgmt-card">
+        <div class="data-file-header">
+          <span class="data-file-icon">👥</span>
+          <div>
+            <div class="data-mgmt-label">Members &amp; Families</div>
+            <code class="data-filename">members_families_Cowork.json</code>
+          </div>
+        </div>
+        <div class="data-mgmt-hint">Stores your member list and family groups. Download after making changes, then replace the file in your project.</div>
+        <div class="data-mgmt-row">
+          <button class="btn-save-data" onclick="saveMembersFile()">⬇ Download</button>
+          <label class="btn-load-data">
+            ⬆ Load
+            <input type="file" accept=".json" onchange="loadMembersFile(event)" style="display:none;" />
+          </label>
+        </div>
+        <div id="dataMsgMembers" class="data-mgmt-msg" style="display:none;"></div>
+      </div>
+
+      <!-- History file -->
+      <div class="card data-mgmt-card">
+        <div class="data-file-header">
+          <span class="data-file-icon">📅</span>
+          <div>
+            <div class="data-mgmt-label">History Records</div>
+            <code class="data-filename">history_Cowork.json</code>
+          </div>
+        </div>
+        <div class="data-mgmt-hint">Stores all confirmed gathering records. Download after confirming a summary, then replace the file in your project.</div>
+        <div class="data-mgmt-row">
+          <button class="btn-save-data" onclick="saveHistoryFile()">⬇ Download</button>
+          <label class="btn-load-data">
+            ⬆ Load
+            <input type="file" accept=".json" onchange="loadHistoryFile(event)" style="display:none;" />
+          </label>
+        </div>
+        <div id="dataMsgHistory" class="data-mgmt-msg" style="display:none;"></div>
+      </div>
+
+    </div><!-- /adminContent -->
+
+  </div><!-- /tab-admin -->
+
+</div><!-- /container -->
+
+
+<script>
+/* ════════════════════════════════════
+   State
+════════════════════════════════════ */
+let members          = [];
+let families         = [];
+let historyEntries   = [];   // saved confirmed records
+let currentSummaryData = null; // holds last computed summary for confirm
+const ADMIN_PASSWORD = 'Admin@53';
+
+/* ════════════════════════════════════
+   Date input — default to today
+════════════════════════════════════ */
+(function setDefaultDate() {
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth() + 1).padStart(2, '0');
+  const dd    = String(today.getDate()).padStart(2, '0');
+  document.getElementById('eventDate').value = `${yyyy}-${mm}-${dd}`;
+})();
+
+function formatDate(iso) {
+  if (!iso) return 'Unknown date';
+  const [y, m, d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                  'Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[parseInt(m,10)-1]} ${parseInt(d,10)}, ${y}`;
+}
+
+/* ════════════════════════════════════
+   Admin lock / unlock
+════════════════════════════════════ */
+function tryUnlock() {
+  const input = document.getElementById('adminPasswordInput');
+  if (input.value === ADMIN_PASSWORD) {
+    document.getElementById('adminLockScreen').style.display = 'none';
+    document.getElementById('adminContent').style.display   = 'block';
+    document.getElementById('lockError').style.display      = 'none';
+    document.getElementById('adminTabBtn').classList.add('tab-btn-unlocked');
+    input.value = '';
+  } else {
+    document.getElementById('lockError').style.display = 'block';
+    input.select();
+  }
+}
+
+function lockAdmin() {
+  document.getElementById('adminLockScreen').style.display = 'block';
+  document.getElementById('adminContent').style.display   = 'none';
+  document.getElementById('adminTabBtn').classList.remove('tab-btn-unlocked');
+}
+
+document.getElementById('adminPasswordInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryUnlock();
+});
+
+/* ════════════════════════════════════
+   Member management
+════════════════════════════════════ */
+function addMember() {
+  const input = document.getElementById('memberInput');
+  const name  = input.value.trim();
+  if (!name) return;
+  if (members.map(m => m.toLowerCase()).includes(name.toLowerCase())) {
+    alert('"' + name + '" is already in the list.');
+    input.select();
+    return;
+  }
+  members.push(name);
+  input.value = '';
+  input.focus();
+  renderMembers();
+  updateControls();
+  updateFamilyMemberOptions();
+}
+
+function removeMember(name) {
+  members = members.filter(m => m !== name);
+  families = families
+    .map(f => ({ ...f, members: f.members.filter(m => m !== name) }))
+    .filter(f => f.members.length > 0);
+  renderMembers();
+  renderFamilies();
+  updateControls();
+  updateFamilyMemberOptions();
+}
+
+function renderMembers() {
+  const c = document.getElementById('memberTags');
+  if (!members.length) {
+    c.innerHTML = '<span class="no-members">No members yet — add someone above.</span>';
+    return;
+  }
+  c.innerHTML = members.map(n => `
+    <span class="tag">
+      ${escHtml(n)}
+      <button class="tag-remove" onclick="removeMember('${escAttr(n)}')"
+              title="Remove ${escAttr(n)}">×</button>
+    </span>`).join('');
+}
+
+/* ════════════════════════════════════
+   Family management
+════════════════════════════════════ */
+function getMembersInFamilies() {
+  const s = new Set();
+  families.forEach(f => f.members.forEach(m => s.add(m)));
+  return s;
+}
+
+function updateFamilyMemberOptions() {
+  const c = document.getElementById('familyMemberCheckboxes');
+  if (!members.length) {
+    c.innerHTML = '<span class="no-members-note">Add members above first.</span>';
+    return;
+  }
+  const inFamily = getMembersInFamilies();
+  c.innerHTML = members.map(m => {
+    const taken = inFamily.has(m);
+    return `
+      <label class="checkbox-label${taken ? ' checkbox-taken' : ''}">
+        <input type="checkbox" name="familyMemberSelect" value="${escAttr(m)}"
+               ${taken ? 'disabled' : ''} />
+        ${escHtml(m)}
+        ${taken ? '<span class="in-family-badge">in family</span>' : ''}
+      </label>`;
+  }).join('');
+}
+
+function addFamily() {
+  const nameInput = document.getElementById('familyNameInput');
+  const name = nameInput.value.trim();
+  if (!name) { alert('Please enter a family name.'); return; }
+  if (families.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+    alert('"' + name + '" already exists.');
+    return;
+  }
+  const selected = Array.from(
+    document.querySelectorAll('input[name="familyMemberSelect"]:checked')
+  ).map(cb => cb.value);
+  if (selected.length < 2) {
+    alert('Please select at least 2 members to form a family.');
+    return;
+  }
+  families.push({ name, members: selected });
+  nameInput.value = '';
+  renderFamilies();
+  updateFamilyMemberOptions();
+}
+
+function removeFamily(name) {
+  families = families.filter(f => f.name !== name);
+  renderFamilies();
+  updateFamilyMemberOptions();
+}
+
+function renderFamilies() {
+  const c = document.getElementById('familyList');
+  if (!families.length) {
+    c.innerHTML = '<p class="no-families-msg">No families defined yet.</p>';
+    return;
+  }
+  c.innerHTML = `
+    <div class="family-list-header">Defined Families</div>
+    ${families.map(fam => `
+      <div class="family-row">
+        <div class="family-info">
+          <span class="family-name">${escHtml(fam.name)}</span>
+          <div class="family-member-tags">
+            ${fam.members.map(m => `<span class="tag tag-sm">${escHtml(m)}</span>`).join('')}
+          </div>
+        </div>
+        <button class="btn-remove-family" onclick="removeFamily('${escAttr(fam.name)}')">✕ Remove</button>
+      </div>`).join('')}`;
+}
+
+/* ════════════════════════════════════
+   Sync dropdowns & checkboxes
+════════════════════════════════════ */
+function updateControls() {
+  ['lunchPayer','dinnerPayer','otherPayer'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select payer —</option>' +
+      members.map(m =>
+        `<option value="${escAttr(m)}" ${m===cur?'selected':''}>${escHtml(m)}</option>`
+      ).join('');
+  });
+  [
+    { containerId: 'lunchAttendees',  prefix: 'lunchAtt'  },
+    { containerId: 'dinnerAttendees', prefix: 'dinnerAtt' },
+    { containerId: 'otherAttendees',  prefix: 'otherAtt'  }
+  ].forEach(({ containerId, prefix }) => {
+    const c = document.getElementById(containerId);
+    const checked = Array.from(c.querySelectorAll('input:checked')).map(el => el.value);
+    if (!members.length) {
+      c.innerHTML = '<span class="no-members-note">Add members in the Admin tab first.</span>';
+      return;
+    }
+    c.innerHTML = members.map(m => `
+      <label class="checkbox-label">
+        <input type="checkbox" name="${prefix}" value="${escAttr(m)}"
+               ${checked.includes(m)?'checked':''}
+               onchange="syncSelectAllBtn('${prefix}')" />
+        ${escHtml(m)}
+      </label>`).join('');
+    syncSelectAllBtn(prefix);
+  });
+}
+
+/* ════════════════════════════════════
+   Select All toggle
+════════════════════════════════════ */
+function toggleSelectAll(prefix, btn) {
+  const cbs = Array.from(document.querySelectorAll(`input[name="${prefix}"]`));
+  if (!cbs.length) return;
+  const all = cbs.every(cb => cb.checked);
+  cbs.forEach(cb => cb.checked = !all);
+  btn.textContent = all ? 'Select All' : 'Deselect All';
+}
+
+function syncSelectAllBtn(prefix) {
+  const btn = document.querySelector(`.btn-select-all[onclick*="${prefix}"]`);
+  if (!btn) return;
+  const cbs = Array.from(document.querySelectorAll(`input[name="${prefix}"]`));
+  if (!cbs.length) return;
+  btn.textContent = cbs.every(cb => cb.checked) ? 'Deselect All' : 'Select All';
+}
+
+/* ════════════════════════════════════
+   Calculation
+════════════════════════════════════ */
+function getChecked(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+              .map(el => el.value);
+}
+
+function calculate() {
+  hideError();
+  const lunchCost       = parseFloat(document.getElementById('lunchCost').value)  || 0;
+  const dinnerCost      = parseFloat(document.getElementById('dinnerCost').value) || 0;
+  const otherCost       = parseFloat(document.getElementById('otherCost').value)  || 0;
+  const lunchPayer      = document.getElementById('lunchPayer').value;
+  const dinnerPayer     = document.getElementById('dinnerPayer').value;
+  const otherPayer      = document.getElementById('otherPayer').value;
+  const otherItemName   = document.getElementById('otherItemName').value.trim() || 'Other';
+  const lunchAttendees  = getChecked('lunchAtt');
+  const dinnerAttendees = getChecked('dinnerAtt');
+  const otherAttendees  = getChecked('otherAtt');
+
+  if (!members.length)            { showError('Please add members in the Admin tab first.'); return; }
+  if (!lunchCost && !dinnerCost && !otherCost) { showError('Please enter at least one cost.'); return; }
+  if (lunchCost  && !lunchPayer)              { showError('Please select who paid for lunch.'); return; }
+  if (lunchCost  && !lunchAttendees.length)   { showError('Please select attendees for lunch.'); return; }
+  if (dinnerCost && !dinnerPayer)             { showError('Please select who paid for dinner.'); return; }
+  if (dinnerCost && !dinnerAttendees.length)  { showError('Please select attendees for dinner.'); return; }
+  if (otherCost  && !otherPayer)              { showError('Please select who paid for "' + otherItemName + '".'); return; }
+  if (otherCost  && !otherAttendees.length)   { showError('Please select attendees for "' + otherItemName + '".'); return; }
+
+  function processMeal(cost, payer, attendees, label) {
+    if (!cost || !payer || !attendees.length) return null;
+    return { cost, payer, attendees, perPerson: cost / attendees.length, label };
+  }
+
+  const lunch  = processMeal(lunchCost,  lunchPayer,  lunchAttendees,  'Lunch');
+  const dinner = processMeal(dinnerCost, dinnerPayer, dinnerAttendees, 'Dinner');
+  const other  = processMeal(otherCost,  otherPayer,  otherAttendees,  otherItemName);
+
+  renderSummary(lunch, dinner, other);
+  switchTab('summary');
+}
+
+/* ════════════════════════════════════
+   Render Summary
+════════════════════════════════════ */
+function renderSummary(lunch, dinner, other) {
+  let html = '';
+
+  const activeMeals = [
+    { data: lunch,  emoji: '🥗'  },
+    { data: dinner, emoji: '🍽️' },
+    { data: other,  emoji: '🧾'  }
+  ].filter(m => m.data !== null);
+
+  // Meal header cards
+  activeMeals.forEach(({ data, emoji }) => {
+    html += `
+      <div class="summary-card">
+        <h3>${emoji} ${escHtml(data.label)}</h3>
+        <div class="summary-meta">
+          <span><strong>Total:</strong> $${fmt(data.cost)}</span>
+          <span><strong>Paid by:</strong> ${escHtml(data.payer)}</span>
+          <span><strong>Attendees:</strong> ${data.attendees.length}</span>
+          <span><strong>Per person:</strong> $${fmt(data.perPerson)}</span>
+        </div>
+      </div>`;
+  });
+
+  // Hub-and-spoke individual logic
+  const meals       = activeMeals.map(m => m.data);
+  const sorted      = [...meals].sort((a, b) => b.cost - a.cost);
+  const primary     = sorted[0];
+  const secondaries = sorted.slice(1);
+
+  const owedToPrimary = {};
+  meals.forEach(meal => {
+    meal.attendees.forEach(person => {
+      if (person === meal.payer || person === primary.payer) return;
+      owedToPrimary[person] = (owedToPrimary[person] || 0) + meal.perPerson;
+    });
+  });
+
+  const primaryOwes = {};
+  secondaries.forEach(meal => {
+    primaryOwes[meal.payer] = (primaryOwes[meal.payer] || 0) + (meal.cost - meal.perPerson);
+  });
+
+  const debtRows = [];
+  Object.entries(owedToPrimary).forEach(([member, amountOwed]) => {
+    const alsoOwed = primaryOwes[member] || 0;
+    const net = amountOwed - alsoOwed;
+    if (net > 0.005)       debtRows.push({ debtor: member,        creditor: primary.payer, amount: net  });
+    else if (net < -0.005) debtRows.push({ debtor: primary.payer, creditor: member,        amount: -net });
+    if (alsoOwed > 0) delete primaryOwes[member];
+  });
+  Object.entries(primaryOwes).forEach(([creditor, amount]) => {
+    if (amount > 0.005) debtRows.push({ debtor: primary.payer, creditor, amount });
+  });
+
+  // Combined Totals card
+  html += `
+    <div class="summary-card combined-card">
+      <h3>💰 Combined Totals</h3>
+      <p class="combined-note">Everyone pays <strong>${escHtml(primary.payer)}</strong>
+         (largest bill: ${escHtml(primary.label)} $${fmt(primary.cost)}).
+         ${escHtml(primary.payer)} then settles with other payers.</p>
+      ${debtRows.length ? buildTable(debtRows) : '<p class="settled-msg">✅ Everyone is settled!</p>'}
+    </div>`;
+
+  // Family Level card
+  let familyRows = null;
+  if (families.length > 0) {
+    familyRows = computeFamilyLevelRows(debtRows, primary.payer);
+    html += `
+      <div class="summary-card family-level-card">
+        <h3>👨‍👩‍👧 Family Level</h3>
+        <p class="combined-note">Debts grouped by family. Members without a family are listed individually.</p>
+        ${familyRows.length ? buildTable(familyRows) : '<p class="settled-msg">✅ All families settled!</p>'}
+      </div>`;
+  }
+
+  document.getElementById('summaryContent').innerHTML = html;
+
+  // Capture data for Confirm button
+  currentSummaryData = {
+    date:          document.getElementById('eventDate').value,
+    mealCards:     activeMeals.map(m => ({
+                     label:      m.data.label,
+                     cost:       m.data.cost,
+                     payer:      m.data.payer,
+                     attendees:  m.data.attendees.length,
+                     perPerson:  m.data.perPerson
+                   })),
+    primaryPayer:  primary.payer,
+    primaryLabel:  primary.label,
+    primaryCost:   primary.cost,
+    debtRows,
+    familyRows,
+    hasFamilies:   families.length > 0
+  };
+
+  // Show Confirm button and reset it
+  const confirmBtn = document.getElementById('confirmSection');
+  confirmBtn.style.display = 'block';
+  const btn = confirmBtn.querySelector('button');
+  btn.textContent = '✅ Confirm & Save to History';
+  btn.disabled    = false;
+  btn.classList.remove('btn-confirm-saved');
+}
+
+/* ════════════════════════════════════
+   Family-level debt computation
+════════════════════════════════════ */
+function computeFamilyLevelRows(debtRows, primaryPayer) {
+  const indBal = {};
+  debtRows.forEach(r => {
+    indBal[r.debtor]   = (indBal[r.debtor]   || 0) + r.amount;
+    indBal[r.creditor] = (indBal[r.creditor] || 0) - r.amount;
+  });
+
+  const memberToFamily = {};
+  families.forEach(fam => fam.members.forEach(m => memberToFamily[m] = fam.name));
+
+  const entityBal = {};
+  Object.entries(indBal).forEach(([member, bal]) => {
+    const entity = memberToFamily[member] || member;
+    entityBal[entity] = (entityBal[entity] || 0) + bal;
+  });
+
+  const primaryEntity = memberToFamily[primaryPayer] || primaryPayer;
+
+  const rows = [];
+  Object.entries(entityBal).forEach(([entity, bal]) => {
+    if (entity === primaryEntity) return;
+    if (bal > 0.005)       rows.push({ debtor: entity,        creditor: primaryEntity, amount: bal  });
+    else if (bal < -0.005) rows.push({ debtor: primaryEntity, creditor: entity,        amount: -bal });
+  });
+  return rows;
+}
+
+/* ════════════════════════════════════
+   Confirm & Save to History
+════════════════════════════════════ */
+function confirmAndSave() {
+  if (!currentSummaryData) return;
+
+  const entry = { id: Date.now(), ...currentSummaryData };
+  historyEntries.push(entry);
+  renderHistory();
+
+  const btn = document.querySelector('#confirmSection button');
+  btn.textContent = '✅ Saved to History!';
+  btn.disabled    = true;
+  btn.classList.add('btn-confirm-saved');
+}
+
+/* ════════════════════════════════════
+   History tab
+════════════════════════════════════ */
+function renderHistory() {
+  const c = document.getElementById('historyContent');
+  if (!historyEntries.length) {
+    c.innerHTML = `
+      <div class="placeholder-msg">
+        <div class="icon">📅</div>
+        <p>No history yet. Calculate a summary and click <strong>Confirm &amp; Save to History</strong>.</p>
+      </div>`;
+    return;
+  }
+
+  // Newest first
+  const sorted = [...historyEntries].sort((a, b) => b.id - a.id);
+
+  c.innerHTML = sorted.map(entry => `
+    <div class="history-entry" id="hist-${entry.id}">
+      <button class="history-header" onclick="toggleHistory(${entry.id})">
+        <div class="history-header-left">
+          <span class="history-date-label">📅 ${formatDate(entry.date)}</span>
+          <div class="history-pills">
+            ${entry.mealCards.map(m =>
+              `<span class="history-pill">${escHtml(m.label)} $${fmt(m.cost)}</span>`
+            ).join('')}
+          </div>
+        </div>
+        <span class="history-chevron" id="chev-${entry.id}">▶</span>
+      </button>
+      <div class="history-details" id="hist-details-${entry.id}">
+        ${buildHistoryDetails(entry)}
+      </div>
+    </div>`).join('');
+}
+
+function toggleHistory(id) {
+  const details = document.getElementById('hist-details-' + id);
+  const chevron = document.getElementById('chev-' + id);
+  const entry   = document.getElementById('hist-' + id);
+  const isOpen  = details.classList.contains('open');
+  details.classList.toggle('open', !isOpen);
+  chevron.textContent = isOpen ? '▶' : '▼';
+  entry.classList.toggle('history-entry-open', !isOpen);
+}
+
+function buildHistoryDetails(entry) {
+  // Meal summary strip
+  const mealStrip = entry.mealCards.map(m => `
+    <div class="hist-meal-item">
+      <span class="hist-meal-label">${escHtml(m.label)}</span>
+      <span class="hist-meal-meta">$${fmt(m.cost)} · Paid by <strong>${escHtml(m.payer)}</strong> · ${m.attendees} ppl · $${fmt(m.perPerson)}/person</span>
+    </div>`).join('');
+
+  // Choose which rows to display: Family Level preferred, else Combined Totals
+  const rows  = (entry.hasFamilies && entry.familyRows) ? entry.familyRows : entry.debtRows;
+  const title = (entry.hasFamilies && entry.familyRows) ? '👨‍👩‍👧 Family Level' : '💰 Combined Totals';
+
+  return `
+    <div class="hist-meal-strip">${mealStrip}</div>
+    <div class="hist-table-section">
+      <div class="hist-table-title">${title}</div>
+      ${rows.length ? buildTable(rows) : '<p class="settled-msg">✅ Everyone settled!</p>'}
+    </div>`;
+}
+
+/* ════════════════════════════════════
+   Build table HTML helper
+════════════════════════════════════ */
+function buildTable(rows) {
+  return `
+    <table>
+      <thead><tr><th>Member / Family</th><th>Owes To</th><th>Amount</th></tr></thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td>${escHtml(r.debtor)}</td>
+            <td>${escHtml(r.creditor)}</td>
+            <td class="amount-cell">$${fmt(r.amount)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ════════════════════════════════════
+   Tab switcher
+════════════════════════════════════ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc  => tc.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  hideError();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+/* ════════════════════════════════════
+   Utility helpers
+════════════════════════════════════ */
+function fmt(n)     { return n.toFixed(2); }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return s.replace(/'/g, "\\'"); }
+
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorBanner').style.display = 'flex';
+}
+function hideError() {
+  document.getElementById('errorBanner').style.display = 'none';
+}
+
+document.getElementById('memberInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addMember();
+});
+document.getElementById('familyNameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addFamily();
+});
+
+/* ════════════════════════════════════
+   Save / Load — Members & Families
+════════════════════════════════════ */
+function saveMembersFile() {
+  downloadJSON(
+    { _version: 1, _savedAt: new Date().toISOString(), members, families },
+    'members_families_Cowork.json'
+  );
+  showDataMsg('dataMsgMembers', '✅ members_families_Cowork.json downloaded. Replace the file in your project folder.', 'success');
+}
+
+function loadMembersFile(event) {
+  readJSON(event, function(data) {
+    if (!Array.isArray(data.members) || !Array.isArray(data.families)) {
+      showDataMsg('dataMsgMembers', '❌ Invalid file. Expected members_families_Cowork.json format.', 'error');
+      return;
+    }
+    if ((members.length || families.length) &&
+        !confirm('This will replace your current members and families. Continue?')) return;
+
+    members  = data.members;
+    families = data.families;
+    renderMembers();
+    renderFamilies();
+    updateControls();
+    updateFamilyMemberOptions();
+    showDataMsg('dataMsgMembers',
+      `✅ Loaded — ${members.length} member(s), ${families.length} family/families.`, 'success');
+  });
+}
+
+/* ════════════════════════════════════
+   Save / Load — History
+════════════════════════════════════ */
+function saveHistoryFile() {
+  downloadJSON(
+    { _version: 1, _savedAt: new Date().toISOString(), historyEntries },
+    'history_Cowork.json'
+  );
+  showDataMsg('dataMsgHistory', `✅ history_Cowork.json downloaded. Replace the file in your project folder.`, 'success');
+}
+
+function loadHistoryFile(event) {
+  readJSON(event, function(data) {
+    if (!Array.isArray(data.historyEntries)) {
+      showDataMsg('dataMsgHistory', '❌ Invalid file. Expected history_Cowork.json format.', 'error');
+      return;
+    }
+    if (historyEntries.length &&
+        !confirm('This will replace your current history. Continue?')) return;
+
+    historyEntries = data.historyEntries;
+    renderHistory();
+    showDataMsg('dataMsgHistory',
+      `✅ Loaded — ${historyEntries.length} history record(s).`, 'success');
+  });
+}
+
+/* ════════════════════════════════════
+   Shared helpers
+════════════════════════════════════ */
+function downloadJSON(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function readJSON(event, callback) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try   { callback(JSON.parse(e.target.result)); }
+    catch { showDataMsg(event.target.closest('.card').querySelector('.data-mgmt-msg').id,
+                        '❌ Could not parse file. Make sure it is a valid JSON file.', 'error'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showDataMsg(elId, msg, type) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent   = msg;
+  el.style.display = 'block';
+  el.className     = 'data-mgmt-msg data-mgmt-msg-' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+/* ════════════════════════════════════
+   Auto-load JSON files on startup
+   (works on GitHub Pages / local server;
+    silently skipped for file:// protocol)
+════════════════════════════════════ */
+(async function autoLoad() {
+  let notes = [];
+  try {
+    const res = await fetch('members_families_Cowork.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.members))  members  = data.members;
+      if (Array.isArray(data.families)) families = data.families;
+      if (members.length || families.length)
+        notes.push(`${members.length} member(s), ${families.length} family/families loaded`);
+    }
+  } catch (_) { /* file:// or network — silently ignore */ }
+
+  try {
+    const res = await fetch('history_Cowork.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.historyEntries)) historyEntries = data.historyEntries;
+      if (historyEntries.length)
+        notes.push(`${historyEntries.length} history record(s) loaded`);
+    }
+  } catch (_) { /* silently ignore */ }
+
+  if (notes.length) {
+    renderMembers();
+    renderFamilies();
+    updateControls();
+    updateFamilyMemberOptions();
+    renderHistory();
+    console.log('Auto-loaded from JSON files:', notes.join('; '));
+  }
+})();
+</script>
+
+</body>
+</html>
