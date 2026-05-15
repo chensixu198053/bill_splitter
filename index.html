@@ -255,6 +255,41 @@
         <div id="dataMsgHistory" class="data-mgmt-msg" style="display:none;"></div>
       </div>
 
+      <!-- GitHub Sync -->
+      <div class="admin-section-divider"></div>
+      <div class="admin-section-header">
+        <h2 class="admin-title">
+          ☁️ GitHub Sync
+          <span id="ghSyncBadge" class="gh-sync-status gh-sync-status-off" style="display:none;"></span>
+        </h2>
+        <span class="admin-section-hint">Auto-push <code>history_Cowork.json</code> to your GitHub repo whenever you confirm a summary — no manual download needed.</span>
+      </div>
+
+      <div class="card data-mgmt-card">
+        <div class="form-group">
+          <label for="ghUsername">GitHub Username</label>
+          <input type="text" id="ghUsername" placeholder="e.g. samchan" maxlength="100" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="ghRepo">Repository Name</label>
+          <input type="text" id="ghRepo" placeholder="e.g. friends-gathering" maxlength="100" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="ghBranch">Branch</label>
+          <input type="text" id="ghBranch" placeholder="main" maxlength="100" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="ghToken">Personal Access Token (PAT)</label>
+          <input type="password" id="ghToken" placeholder="github_pat_…" maxlength="300" autocomplete="off" />
+          <p class="gh-hint">Create a <strong>fine-grained PAT</strong> scoped to this repo with <strong>Contents: read &amp; write</strong> permission. The token is stored only in your browser — never in your code.</p>
+        </div>
+        <div class="data-mgmt-row">
+          <button class="btn-save-data" onclick="saveGitHubSettings()">💾 Save Settings</button>
+          <button class="btn-load-data" onclick="testGitHubConnection()" style="cursor:pointer;">🔗 Test Connection</button>
+        </div>
+        <div id="dataMsgGitHub" class="data-mgmt-msg" style="display:none;"></div>
+      </div>
+
     </div><!-- /adminContent -->
 
   </div><!-- /tab-admin -->
@@ -302,6 +337,7 @@ function tryUnlock() {
     document.getElementById('lockError').style.display      = 'none';
     document.getElementById('adminTabBtn').classList.add('tab-btn-unlocked');
     input.value = '';
+    loadGitHubSettings(); // populate GitHub Sync fields from browser storage
   } else {
     document.getElementById('lockError').style.display = 'block';
     input.select();
@@ -675,7 +711,7 @@ function computeFamilyLevelRows(debtRows, primaryPayer) {
 /* ════════════════════════════════════
    Confirm & Save to History
 ════════════════════════════════════ */
-function confirmAndSave() {
+async function confirmAndSave() {
   if (!currentSummaryData) return;
 
   const entry = { id: Date.now(), ...currentSummaryData };
@@ -683,8 +719,31 @@ function confirmAndSave() {
   renderHistory();
 
   const btn = document.querySelector('#confirmSection button');
-  btn.textContent = '✅ Saved to History!';
-  btn.disabled    = true;
+  btn.disabled = true;
+
+  const s = getGitHubSettings();
+  if (s && s.username && s.repo && s.token) {
+    // GitHub Sync is configured — push automatically
+    btn.textContent = '⏳ Syncing to GitHub…';
+    const success = await pushHistoryToGitHub();
+    if (success) {
+      btn.textContent = '✅ Saved & synced to GitHub!';
+    } else {
+      // GitHub push failed — fall back to download
+      downloadJSON(
+        { _version: 1, _savedAt: new Date().toISOString(), historyEntries },
+        'history_Cowork.json'
+      );
+      btn.textContent = '⚠️ Saved — GitHub sync failed, file downloaded instead.';
+    }
+  } else {
+    // No GitHub settings — download the file as before
+    downloadJSON(
+      { _version: 1, _savedAt: new Date().toISOString(), historyEntries },
+      'history_Cowork.json'
+    );
+    btn.textContent = '✅ Saved! Push the downloaded history_Cowork.json to GitHub.';
+  }
   btn.classList.add('btn-confirm-saved');
 }
 
@@ -899,6 +958,126 @@ function showDataMsg(elId, msg, type) {
   el.className     = 'data-mgmt-msg data-mgmt-msg-' + type;
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+/* ════════════════════════════════════
+   GitHub Sync
+════════════════════════════════════ */
+const GH_SETTINGS_KEY = 'mealSplitter_ghSettings';
+
+function loadGitHubSettings() {
+  try {
+    const stored = localStorage.getItem(GH_SETTINGS_KEY);
+    if (!stored) return;
+    const s = JSON.parse(stored);
+    document.getElementById('ghUsername').value = s.username || '';
+    document.getElementById('ghRepo').value     = s.repo     || '';
+    document.getElementById('ghBranch').value   = s.branch   || 'main';
+    document.getElementById('ghToken').value    = s.token    || '';
+    updateGhBadge(!!s.username && !!s.repo && !!s.token);
+  } catch (_) {}
+}
+
+function saveGitHubSettings() {
+  const settings = {
+    username: document.getElementById('ghUsername').value.trim(),
+    repo:     document.getElementById('ghRepo').value.trim(),
+    branch:   document.getElementById('ghBranch').value.trim() || 'main',
+    token:    document.getElementById('ghToken').value.trim()
+  };
+  localStorage.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
+  updateGhBadge(!!settings.username && !!settings.repo && !!settings.token);
+  showDataMsg('dataMsgGitHub', '✅ Settings saved to your browser.', 'success');
+}
+
+function getGitHubSettings() {
+  try {
+    const stored = localStorage.getItem(GH_SETTINGS_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (_) { return null; }
+}
+
+function updateGhBadge(active) {
+  const badge = document.getElementById('ghSyncBadge');
+  if (!badge) return;
+  badge.style.display  = 'inline-flex';
+  badge.textContent    = active ? '● Sync On' : '● Sync Off';
+  badge.className      = 'gh-sync-status ' + (active ? 'gh-sync-status-on' : 'gh-sync-status-off');
+}
+
+async function testGitHubConnection() {
+  const s = getGitHubSettings();
+  if (!s || !s.username || !s.repo || !s.token) {
+    showDataMsg('dataMsgGitHub', '❌ Please fill in and save all fields first.', 'error');
+    return;
+  }
+  showDataMsg('dataMsgGitHub', '⏳ Testing connection…', 'info');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${s.username}/${s.repo}/contents/history_Cowork.json`,
+      { headers: { Authorization: `token ${s.token}`, Accept: 'application/vnd.github+json' } }
+    );
+    if (res.ok) {
+      showDataMsg('dataMsgGitHub', '✅ Connected! history_Cowork.json found — sync is ready.', 'success');
+    } else if (res.status === 404) {
+      showDataMsg('dataMsgGitHub', '⚠️ Connected, but history_Cowork.json not found in that repo. Check the repo name and make sure the file exists.', 'error');
+    } else if (res.status === 401) {
+      showDataMsg('dataMsgGitHub', '❌ Authentication failed. Check your PAT and make sure it has Contents read & write permission.', 'error');
+    } else {
+      showDataMsg('dataMsgGitHub', `❌ Unexpected error (HTTP ${res.status}). Check your username and repo name.`, 'error');
+    }
+  } catch (_) {
+    showDataMsg('dataMsgGitHub', '❌ Network error — could not reach GitHub. Check your internet connection.', 'error');
+  }
+}
+
+async function pushHistoryToGitHub() {
+  const s = getGitHubSettings();
+  if (!s || !s.username || !s.repo || !s.token) return false;
+
+  const branch = s.branch || 'main';
+  const apiUrl = `https://api.github.com/repos/${s.username}/${s.repo}/contents/history_Cowork.json`;
+  const headers = {
+    Authorization:  `token ${s.token}`,
+    Accept:         'application/vnd.github+json',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    // Step 1: get current SHA (required to update an existing file)
+    let sha = null;
+    const getRes = await fetch(apiUrl, { headers });
+    if (getRes.ok) {
+      const fileData = await getRes.json();
+      sha = fileData.sha;
+    } else if (getRes.status !== 404) {
+      return false; // unexpected error
+    }
+
+    // Step 2: encode content as base64
+    const content    = JSON.stringify(
+      { _version: 1, _savedAt: new Date().toISOString(), historyEntries },
+      null, 2
+    );
+    const contentB64 = btoa(unescape(encodeURIComponent(content)));
+
+    // Step 3: PUT updated file
+    const body = {
+      message: `Update history_Cowork.json — ${new Date().toLocaleDateString()}`,
+      content:  contentB64,
+      branch
+    };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiUrl, {
+      method:  'PUT',
+      headers,
+      body:    JSON.stringify(body)
+    });
+    return putRes.ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 /* ════════════════════════════════════
