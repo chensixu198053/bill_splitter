@@ -725,16 +725,16 @@ async function confirmAndSave() {
   if (s && s.username && s.repo && s.token) {
     // GitHub Sync is configured — push automatically
     btn.textContent = '⏳ Syncing to GitHub…';
-    const success = await pushHistoryToGitHub();
-    if (success) {
+    const result = await pushHistoryToGitHub();
+    if (result.ok) {
       btn.textContent = '✅ Saved & synced to GitHub!';
     } else {
-      // GitHub push failed — fall back to download
+      // GitHub push failed — fall back to download and show reason
       downloadJSON(
         { _version: 1, _savedAt: new Date().toISOString(), historyEntries },
         'history_Cowork.json'
       );
-      btn.textContent = '⚠️ Saved — GitHub sync failed, file downloaded instead.';
+      btn.textContent = `⚠️ Sync failed: ${result.error} File downloaded instead.`;
     }
   } else {
     // No GitHub settings — download the file as before
@@ -801,16 +801,24 @@ function buildHistoryDetails(entry) {
       <span class="hist-meal-meta">$${fmt(m.cost)} · Paid by <strong>${escHtml(m.payer)}</strong> · ${m.attendees} ppl · $${fmt(m.perPerson)}/person</span>
     </div>`).join('');
 
-  // Choose which rows to display: Family Level preferred, else Combined Totals
-  const rows  = (entry.hasFamilies && entry.familyRows) ? entry.familyRows : entry.debtRows;
-  const title = (entry.hasFamilies && entry.familyRows) ? '👨‍👩‍👧 Family Level' : '💰 Combined Totals';
+  // Always show Combined Totals
+  const combinedSection = `
+    <div class="hist-table-section">
+      <div class="hist-table-title">💰 Combined Totals</div>
+      ${entry.debtRows.length ? buildTable(entry.debtRows) : '<p class="settled-msg">✅ Everyone settled!</p>'}
+    </div>`;
+
+  // Show Family Level only when families are defined
+  const familySection = (entry.hasFamilies && entry.familyRows) ? `
+    <div class="hist-table-section">
+      <div class="hist-table-title">👨‍👩‍👧 Family Level</div>
+      ${entry.familyRows.length ? buildTable(entry.familyRows) : '<p class="settled-msg">✅ All families settled!</p>'}
+    </div>` : '';
 
   return `
     <div class="hist-meal-strip">${mealStrip}</div>
-    <div class="hist-table-section">
-      <div class="hist-table-title">${title}</div>
-      ${rows.length ? buildTable(rows) : '<p class="settled-msg">✅ Everyone settled!</p>'}
-    </div>`;
+    ${combinedSection}
+    ${familySection}`;
 }
 
 /* ════════════════════════════════════
@@ -961,9 +969,69 @@ function showDataMsg(elId, msg, type) {
 }
 
 /* ════════════════════════════════════
+   Restore Summary tab from latest history entry
+   (runs on page load so all visitors see the last confirmed gathering)
+════════════════════════════════════ */
+function restoreSummaryFromHistory() {
+  if (!historyEntries.length) return;
+
+  // Most recent confirmed entry
+  const entry = [...historyEntries].sort((a, b) => b.id - a.id)[0];
+  currentSummaryData = entry;
+
+  const mealEmojis = { Lunch: '🥗', Dinner: '🍽️' };
+  let html = '';
+
+  // Meal cards
+  entry.mealCards.forEach(m => {
+    const emoji = mealEmojis[m.label] || '🧾';
+    html += `
+      <div class="summary-card">
+        <h3>${emoji} ${escHtml(m.label)}</h3>
+        <div class="summary-meta">
+          <span><strong>Total:</strong> $${fmt(m.cost)}</span>
+          <span><strong>Paid by:</strong> ${escHtml(m.payer)}</span>
+          <span><strong>Attendees:</strong> ${m.attendees}</span>
+          <span><strong>Per person:</strong> $${fmt(m.perPerson)}</span>
+        </div>
+      </div>`;
+  });
+
+  // Combined Totals card
+  html += `
+    <div class="summary-card combined-card">
+      <h3>💰 Combined Totals</h3>
+      <p class="combined-note">Everyone pays <strong>${escHtml(entry.primaryPayer)}</strong>
+         (largest bill: ${escHtml(entry.primaryLabel)} $${fmt(entry.primaryCost)}).
+         ${escHtml(entry.primaryPayer)} then settles with other payers.</p>
+      ${entry.debtRows.length ? buildTable(entry.debtRows) : '<p class="settled-msg">✅ Everyone is settled!</p>'}
+    </div>`;
+
+  // Family Level card (only when families are defined)
+  if (entry.hasFamilies && entry.familyRows) {
+    html += `
+      <div class="summary-card family-level-card">
+        <h3>👨‍👩‍👧 Family Level</h3>
+        <p class="combined-note">Debts grouped by family. Members without a family are listed individually.</p>
+        ${entry.familyRows.length ? buildTable(entry.familyRows) : '<p class="settled-msg">✅ All families settled!</p>'}
+      </div>`;
+  }
+
+  document.getElementById('summaryContent').innerHTML = html;
+
+  // Show Confirm button as already saved (this entry is already in History)
+  const confirmSection = document.getElementById('confirmSection');
+  confirmSection.style.display = 'block';
+  const btn = confirmSection.querySelector('button');
+  btn.textContent = '✅ Already saved to History';
+  btn.disabled    = true;
+  btn.classList.add('btn-confirm-saved');
+}
+
+/* ════════════════════════════════════
    GitHub Sync
 ════════════════════════════════════ */
-const GH_SETTINGS_KEY = 'mealSplitter_ghSettings';
+const GH_SETTINGS_KEY   = 'mealSplitter_ghSettings';
 
 function loadGitHubSettings() {
   try {
@@ -1012,33 +1080,52 @@ async function testGitHubConnection() {
     return;
   }
   showDataMsg('dataMsgGitHub', '⏳ Testing connection…', 'info');
+  const headers = { Authorization: `Bearer ${s.token}`, Accept: 'application/vnd.github+json' };
   try {
-    const res = await fetch(
-      `https://api.github.com/repos/${s.username}/${s.repo}/contents/history_Cowork.json`,
-      { headers: { Authorization: `token ${s.token}`, Accept: 'application/vnd.github+json' } }
-    );
-    if (res.ok) {
-      showDataMsg('dataMsgGitHub', '✅ Connected! history_Cowork.json found — sync is ready.', 'success');
-    } else if (res.status === 404) {
-      showDataMsg('dataMsgGitHub', '⚠️ Connected, but history_Cowork.json not found in that repo. Check the repo name and make sure the file exists.', 'error');
-    } else if (res.status === 401) {
-      showDataMsg('dataMsgGitHub', '❌ Authentication failed. Check your PAT and make sure it has Contents read & write permission.', 'error');
-    } else {
-      showDataMsg('dataMsgGitHub', `❌ Unexpected error (HTTP ${res.status}). Check your username and repo name.`, 'error');
+    // Step 1: verify the token is valid
+    const userRes = await fetch('https://api.github.com/user', { headers });
+    if (userRes.status === 401) {
+      showDataMsg('dataMsgGitHub', '❌ Invalid PAT — authentication failed. Double-check your token.', 'error');
+      return;
     }
+
+    // Step 2: verify repo exists and PAT has write permission
+    const repoRes = await fetch(`https://api.github.com/repos/${s.username}/${s.repo}`, { headers });
+    if (!repoRes.ok) {
+      showDataMsg('dataMsgGitHub', `❌ Repo "${s.repo}" not found or not accessible with this token.`, 'error');
+      return;
+    }
+    const repoData = await repoRes.json();
+    if (!repoData.permissions?.push) {
+      showDataMsg('dataMsgGitHub', '❌ PAT has read-only access. Go to your PAT settings and change Contents to "Read and write".', 'error');
+      return;
+    }
+
+    // Step 3: verify history_Cowork.json exists in the repo
+    const fileRes = await fetch(
+      `https://api.github.com/repos/${s.username}/${s.repo}/contents/history_Cowork.json`,
+      { headers }
+    );
+    if (fileRes.status === 404) {
+      showDataMsg('dataMsgGitHub', '⚠️ Token and write access OK, but history_Cowork.json not found in the repo. Push the file to GitHub first.', 'error');
+      return;
+    }
+
+    showDataMsg('dataMsgGitHub', '✅ All good! Token valid, write access confirmed, file found. Sync is ready.', 'success');
   } catch (_) {
-    showDataMsg('dataMsgGitHub', '❌ Network error — could not reach GitHub. Check your internet connection.', 'error');
+    showDataMsg('dataMsgGitHub', '❌ Network error — could not reach GitHub.', 'error');
   }
 }
 
 async function pushHistoryToGitHub() {
   const s = getGitHubSettings();
-  if (!s || !s.username || !s.repo || !s.token) return false;
+  if (!s || !s.username || !s.repo || !s.token)
+    return { ok: false, error: 'GitHub Sync not configured.' };
 
   const branch = s.branch || 'main';
   const apiUrl = `https://api.github.com/repos/${s.username}/${s.repo}/contents/history_Cowork.json`;
   const headers = {
-    Authorization:  `token ${s.token}`,
+    Authorization:  `Bearer ${s.token}`,
     Accept:         'application/vnd.github+json',
     'Content-Type': 'application/json'
   };
@@ -1051,7 +1138,7 @@ async function pushHistoryToGitHub() {
       const fileData = await getRes.json();
       sha = fileData.sha;
     } else if (getRes.status !== 404) {
-      return false; // unexpected error
+      return { ok: false, error: `Could not read file from GitHub (HTTP ${getRes.status}).` };
     }
 
     // Step 2: encode content as base64
@@ -1074,9 +1161,13 @@ async function pushHistoryToGitHub() {
       headers,
       body:    JSON.stringify(body)
     });
-    return putRes.ok;
-  } catch (_) {
-    return false;
+
+    if (putRes.ok) return { ok: true };
+
+    const errData = await putRes.json().catch(() => ({}));
+    return { ok: false, error: `HTTP ${putRes.status} — ${errData.message || putRes.statusText}` };
+  } catch (e) {
+    return { ok: false, error: 'Network error.' };
   }
 }
 
@@ -1114,8 +1205,10 @@ async function pushHistoryToGitHub() {
     updateControls();
     updateFamilyMemberOptions();
     renderHistory();
+    restoreSummaryFromHistory(); // show most recent confirmed gathering in Summary tab
     console.log('Auto-loaded from JSON files:', notes.join('; '));
   }
+
 })();
 </script>
 
