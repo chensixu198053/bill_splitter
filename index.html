@@ -208,51 +208,12 @@
         <div id="familyList" class="family-list"></div>
       </div>
 
-      <!-- ── Data Management section ── -->
+      <!-- ── Save to GitHub button ── -->
       <div class="admin-section-divider"></div>
-      <div class="admin-section-header">
-        <h2 class="admin-title">💾 Data Management</h2>
-        <span class="admin-section-hint">Two separate files keep your setup and records independent. Replace the downloaded files in your project folder (or GitHub) to persist changes.</span>
-      </div>
-
-      <!-- Members & Families file -->
-      <div class="card data-mgmt-card">
-        <div class="data-file-header">
-          <span class="data-file-icon">👥</span>
-          <div>
-            <div class="data-mgmt-label">Members &amp; Families</div>
-            <code class="data-filename">members_families_Cowork.json</code>
-          </div>
-        </div>
-        <div class="data-mgmt-hint">Stores your member list and family groups. Download after making changes, then replace the file in your project.</div>
-        <div class="data-mgmt-row">
-          <button class="btn-save-data" onclick="saveMembersFile()">⬇ Download</button>
-          <label class="btn-load-data">
-            ⬆ Load
-            <input type="file" accept=".json" onchange="loadMembersFile(event)" style="display:none;" />
-          </label>
-        </div>
-        <div id="dataMsgMembers" class="data-mgmt-msg" style="display:none;"></div>
-      </div>
-
-      <!-- History file -->
-      <div class="card data-mgmt-card">
-        <div class="data-file-header">
-          <span class="data-file-icon">📅</span>
-          <div>
-            <div class="data-mgmt-label">History Records</div>
-            <code class="data-filename">history_Cowork.json</code>
-          </div>
-        </div>
-        <div class="data-mgmt-hint">Stores all confirmed gathering records. Download after confirming a summary, then replace the file in your project.</div>
-        <div class="data-mgmt-row">
-          <button class="btn-save-data" onclick="saveHistoryFile()">⬇ Download</button>
-          <label class="btn-load-data">
-            ⬆ Load
-            <input type="file" accept=".json" onchange="loadHistoryFile(event)" style="display:none;" />
-          </label>
-        </div>
-        <div id="dataMsgHistory" class="data-mgmt-msg" style="display:none;"></div>
+      <div class="card data-mgmt-card" style="text-align:center;">
+        <button id="btnSaveMembers" class="btn-calculate" style="width:100%;margin:0;"
+                onclick="saveMembersToGitHub()">☁️ Save Members &amp; Families to GitHub</button>
+        <div id="dataMsgMembersSave" class="data-mgmt-msg" style="display:none;"></div>
       </div>
 
       <!-- GitHub Sync -->
@@ -262,7 +223,7 @@
           ☁️ GitHub Sync
           <span id="ghSyncBadge" class="gh-sync-status gh-sync-status-off" style="display:none;"></span>
         </h2>
-        <span class="admin-section-hint">Auto-push <code>history_Cowork.json</code> to your GitHub repo whenever you confirm a summary — no manual download needed.</span>
+        <span class="admin-section-hint">Configure once — members &amp; families and history records are both pushed to GitHub automatically.</span>
       </div>
 
       <div class="card data-mgmt-card">
@@ -1114,6 +1075,72 @@ async function testGitHubConnection() {
     showDataMsg('dataMsgGitHub', '✅ All good! Token valid, write access confirmed, file found. Sync is ready.', 'success');
   } catch (_) {
     showDataMsg('dataMsgGitHub', '❌ Network error — could not reach GitHub.', 'error');
+  }
+}
+
+async function pushMembersToGitHub() {
+  const s = getGitHubSettings();
+  if (!s || !s.username || !s.repo || !s.token)
+    return { ok: false, error: 'GitHub Sync not configured. Fill in the settings below first.' };
+
+  const branch = s.branch || 'main';
+  const apiUrl = `https://api.github.com/repos/${s.username}/${s.repo}/contents/members_families_Cowork.json`;
+  const headers = {
+    Authorization:  `Bearer ${s.token}`,
+    Accept:         'application/vnd.github+json',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    let sha = null;
+    const getRes = await fetch(apiUrl, { headers });
+    if (getRes.ok) {
+      sha = (await getRes.json()).sha;
+    } else if (getRes.status !== 404) {
+      return { ok: false, error: `Could not read file from GitHub (HTTP ${getRes.status}).` };
+    }
+
+    const content    = JSON.stringify(
+      { _version: 1, _savedAt: new Date().toISOString(), members, families },
+      null, 2
+    );
+    const contentB64 = btoa(unescape(encodeURIComponent(content)));
+
+    const body = {
+      message: `Update members_families_Cowork.json — ${new Date().toLocaleDateString()}`,
+      content:  contentB64,
+      branch
+    };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
+    if (putRes.ok) return { ok: true };
+
+    const errData = await putRes.json().catch(() => ({}));
+    return { ok: false, error: `HTTP ${putRes.status} — ${errData.message || putRes.statusText}` };
+  } catch (_) {
+    return { ok: false, error: 'Network error.' };
+  }
+}
+
+async function saveMembersToGitHub() {
+  const btn = document.getElementById('btnSaveMembers');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Saving to GitHub…';
+
+  const result = await pushMembersToGitHub();
+
+  if (result.ok) {
+    btn.textContent = '✅ Saved!';
+    showDataMsg('dataMsgMembersSave', '✅ members_families_Cowork.json updated in GitHub.', 'success');
+    setTimeout(() => {
+      btn.textContent = '☁️ Save Members & Families to GitHub';
+      btn.disabled    = false;
+    }, 3000);
+  } else {
+    btn.textContent = '☁️ Save Members & Families to GitHub';
+    btn.disabled    = false;
+    showDataMsg('dataMsgMembersSave', `❌ Save failed: ${result.error}`, 'error');
   }
 }
 
