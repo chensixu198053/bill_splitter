@@ -1,5 +1,99 @@
 {
   "_version": 1,
-  "_savedAt": "",
-  "historyEntries": []
+  "_savedAt": "2026-05-15T01:20:49.537Z",
+  "historyEntries": [
+    {
+      "id": 1778808049185,
+      "date": "2026-05-14",
+      "mealCards": [
+        {
+          "label": "Lunch",
+          "cost": 239.68,
+          "payer": "Sam",
+          "attendees": 9,
+          "perPerson": 26.63111111111111
+        },
+        {
+          "label": "Dinner",
+          "cost": 166.7,
+          "payer": "Fei",
+          "attendees": 9,
+          "perPerson": 18.522222222222222
+        }
+      ],
+      "primaryPayer": "Sam",
+      "primaryLabel": "Lunch",
+      "primaryCost": 239.68,
+      "debtRows": [
+        {
+          "debtor": "Sunny",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Sam",
+          "creditor": "Fei",
+          "amount": 121.54666666666667
+        },
+        {
+          "debtor": "Ying",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Yuelin",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Wayne",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Chi",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Hua",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Jiao",
+          "creditor": "Sam",
+          "amount": 45.153333333333336
+        }
+      ],
+      "familyRows": [
+        {
+          "debtor": "Sam's family",
+          "creditor": "Fei's family",
+          "amount": 76.39333333333333
+        },
+        {
+          "debtor": "Wayne's family",
+          "creditor": "Sam's family",
+          "amount": 90.30666666666667
+        },
+        {
+          "debtor": "Chi",
+          "creditor": "Sam's family",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Hua",
+          "creditor": "Sam's family",
+          "amount": 45.153333333333336
+        },
+        {
+          "debtor": "Jiao",
+          "creditor": "Sam's family",
+          "amount": 45.153333333333336
+        }
+      ],
+      "hasFamilies": true
+    }
+  ]
 }
