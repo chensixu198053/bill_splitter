@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-05-14T21:45:55.511Z",
+  "_savedAt": "2026-05-16T00:28:57.735Z",
   "members": [
     "Sam",
     "Sunny",
@@ -10,7 +10,9 @@
     "Wayne",
     "Chi",
     "Hua",
-    "Jiao"
+    "Jiao",
+    "Cindy",
+    "Paul"
   ],
   "families": [
     {
@@ -32,6 +34,13 @@
       "members": [
         "Yuelin",
         "Wayne"
+      ]
+    },
+    {
+      "name": "Paul’s family",
+      "members": [
+        "Cindy",
+        "Paul"
       ]
     }
   ]
