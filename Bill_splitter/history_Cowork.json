@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-05-22T15:48:29.475Z",
+  "_savedAt": "2026-05-15T01:20:49.537Z",
   "historyEntries": [
     {
       "id": 1778808049185,
@@ -91,97 +91,6 @@
           "debtor": "Jiao",
           "creditor": "Sam's family",
           "amount": 45.153333333333336
-        }
-      ],
-      "hasFamilies": true
-    },
-    {
-      "id": 1779464908981,
-      "date": "2026-05-16",
-      "mealCards": [
-        {
-          "label": "Lunch",
-          "cost": 235.59,
-          "payer": "Wayne",
-          "attendees": 10,
-          "perPerson": 23.559
-        }
-      ],
-      "primaryPayer": "Wayne",
-      "primaryLabel": "Lunch",
-      "primaryCost": 235.59,
-      "debtRows": [
-        {
-          "debtor": "Sam",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Sunny",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Fei",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Ying",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Yuelin",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Chi",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Jiao",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Cindy",
-          "creditor": "Wayne",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Paul",
-          "creditor": "Wayne",
-          "amount": 23.559
-        }
-      ],
-      "familyRows": [
-        {
-          "debtor": "Sam's family",
-          "creditor": "Wayne's family",
-          "amount": 47.118
-        },
-        {
-          "debtor": "Fei's family",
-          "creditor": "Wayne's family",
-          "amount": 47.118
-        },
-        {
-          "debtor": "Chi",
-          "creditor": "Wayne's family",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Jiao",
-          "creditor": "Wayne's family",
-          "amount": 23.559
-        },
-        {
-          "debtor": "Paul’s family",
-          "creditor": "Wayne's family",
-          "amount": 47.118
         }
       ],
       "hasFamilies": true
