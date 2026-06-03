@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-05-16T00:28:57.735Z",
+  "_savedAt": "2026-06-03T20:27:26.880Z",
   "members": [
     "Sam",
     "Sunny",
@@ -12,7 +12,8 @@
     "Hua",
     "Jiao 小娇",
     "Cindy",
-    "Paul"
+    "Paul",
+    "Jing"
   ],
   "families": [
     {
@@ -41,6 +42,13 @@
       "members": [
         "Cindy",
         "Paul"
+      ]
+    },
+    {
+      "name": "Chi’s family",
+      "members": [
+        "Chi",
+        "Jing"
       ]
     }
   ]
