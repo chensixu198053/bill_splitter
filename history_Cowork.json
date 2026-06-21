@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-06-19T00:47:52.855Z",
+  "_savedAt": "2026-06-21T22:58:28.402Z",
   "historyEntries": [
     {
       "id": 1778808049185,
@@ -216,6 +216,92 @@
           "debtor": "Paul’s family",
           "creditor": "Sam's family",
           "amount": 17.4575
+        }
+      ],
+      "hasFamilies": true
+    },
+    {
+      "id": 1782082707899,
+      "date": "2026-06-21",
+      "mealCards": [
+        {
+          "label": "Dinner",
+          "cost": 139.3,
+          "payer": "Ying",
+          "attendees": 9,
+          "perPerson": 15.47777777777778
+        }
+      ],
+      "primaryPayer": "Ying",
+      "primaryLabel": "Dinner",
+      "primaryCost": 139.3,
+      "debtRows": [
+        {
+          "debtor": "Sam",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Sunny",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Fei",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Yuelin",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Wayne",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Hua",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Jiao 小娇",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Rui",
+          "creditor": "Ying",
+          "amount": 15.47777777777778
+        }
+      ],
+      "familyRows": [
+        {
+          "debtor": "Sam's family",
+          "creditor": "Fei's family",
+          "amount": 30.95555555555556
+        },
+        {
+          "debtor": "Wayne's family",
+          "creditor": "Fei's family",
+          "amount": 30.95555555555556
+        },
+        {
+          "debtor": "Hua’s Family",
+          "creditor": "Fei's family",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Jiao 小娇",
+          "creditor": "Fei's family",
+          "amount": 15.47777777777778
+        },
+        {
+          "debtor": "Rui",
+          "creditor": "Fei's family",
+          "amount": 15.47777777777778
         }
       ],
       "hasFamilies": true
