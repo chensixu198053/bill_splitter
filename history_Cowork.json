@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-06-21T23:00:50.262Z",
+  "_savedAt": "2026-06-21T23:03:09.819Z",
   "historyEntries": [
     {
       "id": 1778808049185,
@@ -221,8 +221,8 @@
       "hasFamilies": true
     },
     {
-      "id": 1782082849895,
-      "date": "2026-06-21",
+      "id": 1782082989412,
+      "date": "2026-06-20",
       "mealCards": [
         {
           "label": "Dinner",
