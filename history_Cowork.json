@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-06-21T23:03:09.819Z",
+  "_savedAt": "2026-11-17T03:13:38.014Z",
   "historyEntries": [
     {
       "id": 1778808049185,
@@ -302,6 +302,146 @@
           "debtor": "Rui",
           "creditor": "Fei's family",
           "amount": 15.47777777777778
+        }
+      ],
+      "hasFamilies": true
+    },
+    {
+      "id": 1794885217515,
+      "date": "2026-11-14",
+      "mealCards": [
+        {
+          "label": "Lunch",
+          "cost": 199.53,
+          "payer": "Sam",
+          "attendees": 7,
+          "perPerson": 28.504285714285714
+        },
+        {
+          "label": "Dinner",
+          "cost": 516.7,
+          "payer": "Wayne",
+          "attendees": 14,
+          "perPerson": 36.90714285714286
+        },
+        {
+          "label": "Other",
+          "cost": 70.28,
+          "payer": "Sam",
+          "attendees": 14,
+          "perPerson": 5.0200000000000005
+        }
+      ],
+      "primaryPayer": "Wayne",
+      "primaryLabel": "Dinner",
+      "primaryCost": 516.7,
+      "debtRows": [
+        {
+          "debtor": "Sunny",
+          "creditor": "Wayne",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Yuelin",
+          "creditor": "Wayne",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Jiao 小娇",
+          "creditor": "Wayne",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Cindy",
+          "creditor": "Wayne",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Paul",
+          "creditor": "Wayne",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Wayne",
+          "creditor": "Sam",
+          "amount": 199.37857142857143
+        },
+        {
+          "debtor": "Fei",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Ying",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Chi",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Hua",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Jing",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Lu",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Sabrina",
+          "creditor": "Wayne",
+          "amount": 41.92714285714286
+        }
+      ],
+      "familyRows": [
+        {
+          "debtor": "Wayne's family",
+          "creditor": "Sam's family",
+          "amount": 128.94714285714286
+        },
+        {
+          "debtor": "Jiao 小娇",
+          "creditor": "Wayne's family",
+          "amount": 70.43142857142857
+        },
+        {
+          "debtor": "Paul’s family",
+          "creditor": "Wayne's family",
+          "amount": 140.86285714285714
+        },
+        {
+          "debtor": "Fei's family",
+          "creditor": "Wayne's family",
+          "amount": 83.85428571428572
+        },
+        {
+          "debtor": "Chi’s family",
+          "creditor": "Wayne's family",
+          "amount": 83.85428571428572
+        },
+        {
+          "debtor": "Hua’s Family",
+          "creditor": "Wayne's family",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Lu",
+          "creditor": "Wayne's family",
+          "amount": 41.92714285714286
+        },
+        {
+          "debtor": "Lou’s family",
+          "creditor": "Wayne's family",
+          "amount": 41.92714285714286
         }
       ],
       "hasFamilies": true
