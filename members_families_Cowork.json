@@ -1,6 +1,6 @@
 {
   "_version": 1,
-  "_savedAt": "2026-06-21T22:56:02.159Z",
+  "_savedAt": "2026-11-17T02:58:00.906Z",
   "members": [
     "Sam",
     "Sunny",
@@ -15,7 +15,9 @@
     "Paul",
     "Jing",
     "Si Qi",
-    "Rui"
+    "Rui",
+    "Lu",
+    "Sabrina"
   ],
   "families": [
     {
@@ -58,6 +60,13 @@
       "members": [
         "Hua",
         "Si Qi"
+      ]
+    },
+    {
+      "name": "Lou’s family",
+      "members": [
+        "Rui",
+        "Sabrina"
       ]
     }
   ]
